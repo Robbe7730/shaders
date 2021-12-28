@@ -13,6 +13,7 @@ in vec4 biome_specific_color_vs;
 in vec2 light_levels_vs;
 in vec3 normal_vs;
 in vec3 direction_vs;
+in vec3 position_vs;
 
 // Outputs
 layout(location = 0) out vec4 color_fs;
@@ -32,14 +33,14 @@ void main() {
     const vec4 texture_color = texture * biome_specific_color_vs;
     const vec4 texture_color_light = texture2D(lightmap, light_levels_vs / 255) * texture_color;
 
-    vec3 n = normal_vs;
-    vec3 l = getSunMoonPosition();
-    vec3 v = -direction_vs;
+    vec3 n = normalize(normal_vs);
+    vec3 l = normalize(getSunMoonPosition());
+    vec3 v = -normalize(direction_vs);
     vec3 h = (v + l) / length(v + l);
 
     float Ia = 0.1;
     float I = 1.0; // TODO: get from sun
-    float p = 100;
+    float p = 5000;
 
     color_fs = vec4((
         (texture_color_light.rgb * Ia) +
