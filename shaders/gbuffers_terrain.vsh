@@ -10,5 +10,6 @@ void main()
 
   texture_coord_vs = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
   lightmap_coord_vs = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
+
   color_vs = gl_Color;
 }
