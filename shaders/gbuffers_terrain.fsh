@@ -9,7 +9,7 @@ uniform sampler2DShadow shadow;
 in vec4 color_gs;
 in vec2 texture_coord_gs;
 in vec2 lightmap_coord_gs;
-in vec4 shadowmap_coord_gs;
+in vec3 shadowmap_coord_gs;
 
 layout(location = 0) out vec4 color_fs;
 

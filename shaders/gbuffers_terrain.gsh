@@ -2,6 +2,10 @@
 
 #extension GL_ARB_geometry_shader4 : enable
 
+#define TESSELATION_DEPTH 0
+#define TESSELATION_NUM_VERTICES (int(pow(2, 2 * TESSELATION_DEPTH + 1) + pow(2, TESSELATION_DEPTH + 2) + pow(2, TESSELATION_DEPTH + 1) + 2))
+#define TESSELATION_NUM_TRIANGLES (int(pow(4, TESSELATION_DEPTH)))
+
 const int maxVerticesOut = 12;
 
 // From Optifine/Minecraft
@@ -22,63 +26,67 @@ in vec4 color_vs[];
 
 out vec2 texture_coord_gs;
 out vec2 lightmap_coord_gs;
-out vec4 shadowmap_coord_gs;
+out vec3 shadowmap_coord_gs;
 out vec4 color_gs;
 
-void emit_point(vec4 world_pos, vec2 texture_pos, vec2 lightmap_pos, vec4 color) {
-  gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * world_pos;
+struct Point {
+  vec4 screen_coord;
+  vec2 texture_coord;
+  vec2 lightmap_coord;
+  vec3 shadowmap_coord;
+  vec4 color;
+};
 
-  shadowmap_coord_gs = gbufferModelViewInverse * gbufferProjectionInverse * gl_Position;
-  // You would think that at this point, shadowmap_coord_gs should be equal to world_pos
-  // but for some reason I don't understand, this works and just using world_pos doesn't
-  shadowmap_coord_gs = shadowProjection * shadowModelView * shadowmap_coord_gs;
-  shadowmap_coord_gs /= shadowmap_coord_gs.w;
-  shadowmap_coord_gs.xyz = shadowmap_coord_gs.xyz * 0.5 + 0.5;
+Point get_initial_point(int i) {
+  vec4 world_coord = gl_PositionIn[i];
+  vec4 screen_coord = gl_ProjectionMatrix * gl_ModelViewMatrix * world_coord;
 
-  texture_coord_gs = texture_pos;
-  lightmap_coord_gs = lightmap_pos;
-  color_gs = color;
+  vec4 shadowmap_coord = gbufferModelViewInverse * gbufferProjectionInverse * screen_coord;
+  // You would think that at this point, shadowmap_coord_gs should be
+  // equal to world_coord but for some reason I don't understand, this
+  // works and just using world_coord doesn't...
+  shadowmap_coord = shadowProjection * shadowModelView * shadowmap_coord;
+  shadowmap_coord /= shadowmap_coord.w;
+  shadowmap_coord.xyz = shadowmap_coord.xyz * 0.5 + 0.5;
 
-  EmitVertex();
-}
-
-void emit_existing(int i) {
-  emit_point(
-    gl_PositionIn[i],
+  return Point(
+    screen_coord,
     texture_coord_vs[i],
     lightmap_coord_vs[i],
+    shadowmap_coord.xyz,
     color_vs[i]
-  );
-}
-
-void emit_between(int i, int j) {
-  emit_point(
-    (gl_PositionIn[i] + gl_PositionIn[j]) / 2.0,
-    (texture_coord_vs[i] + texture_coord_vs[j]) / 2.0,
-    (lightmap_coord_vs[i] + lightmap_coord_vs[j]) / 2.0,
-    (color_vs[i] + color_vs[j]) / 2.0
   );
 }
 
 void main()
 {
-  emit_existing(0);
-  emit_between(0, 1);
-  emit_between(0, 2);
-  EndPrimitive();
+  int num_triangles = 1;
 
-  emit_existing(1);
-  emit_between(1, 2);
-  emit_between(1, 0);
-  EndPrimitive();
+  Point[TESSELATION_NUM_VERTICES] points;
 
-  emit_existing(2);
-  emit_between(2, 0);
-  emit_between(2, 1);
-  EndPrimitive();
+  ivec3 triangles[TESSELATION_NUM_TRIANGLES];
 
-  emit_between(0, 1);
-  emit_between(1, 2);
-  emit_between(2, 0);
-  EndPrimitive();
+  int vertex_i = 0;
+
+  // Initial triangle
+  for (vertex_i = 0; vertex_i < 3; vertex_i++) {
+    points[vertex_i] = get_initial_point(vertex_i);
+  }
+
+  triangles[0] = ivec3(0, 1, 2);
+
+  // Emit the triangles
+  for (int triangle_id = 0; triangle_id < triangles.length(); triangle_id++) {
+    ivec3 triangle = triangles[triangle_id];
+    for (int vertex_id = 0; vertex_id < 3; vertex_id++) {
+      Point p = points[vertex_id];
+      gl_Position = p.screen_coord;
+      texture_coord_gs = p.texture_coord;
+      shadowmap_coord_gs = p.shadowmap_coord;
+      lightmap_coord_gs = p.lightmap_coord;
+      color_gs = p.color;
+      EmitVertex();
+    }
+    EndPrimitive();
+  }
 }
