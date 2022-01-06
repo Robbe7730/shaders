@@ -2,10 +2,10 @@
 
 #extension GL_ARB_geometry_shader4 : enable
 
-#define TESSELATION_DEPTH 2
+#define TESSELATION_DEPTH 2 // The amount of triangle subdivisions to perform [0 1 2]
 
 layout (triangles) in;
-layout (triangle_strip, max_vertices = 68) out;
+layout (triangle_strip, max_vertices = 64) out;
 
 // From Optifine/Minecraft
 

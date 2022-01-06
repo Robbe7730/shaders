@@ -1,5 +1,7 @@
 #version 450 compatibility
 
+const int shadowMapResolution = 2048; // Resolution of the shadow map. Higher values lead to nicer shadows, but require more computations. (see also: Shadow Quality in the main Shaders screen) [1024 2048 4096 8192]
+
 // From Optifine/Minecraft
 uniform sampler2D texture;
 uniform sampler2D lightmap;
