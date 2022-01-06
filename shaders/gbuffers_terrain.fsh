@@ -26,5 +26,4 @@ void main() {
   vec4 texture = texture2D(texture, texture_coord_gs);
 
   color_fs = light * color_gs * texture;
-  color_fs = color_gs;
 }
