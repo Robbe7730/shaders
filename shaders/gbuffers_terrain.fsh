@@ -32,7 +32,7 @@ void main() {
 
   if (shadowmap_coord_gs.z - shadowmap_value_0 >= 0.0001 &&
       shadowmap_coord_gs.z - shadowmap_value_1 >= 0.0001) {
-    color_fs *= 0.5;
+    color_fs.xyz *= 0.5;
   } else if (shadowmap_coord_gs.z - shadowmap_value_0 >= 0.0001 &&
       !(shadowmap_coord_gs.z - shadowmap_value_1 >= 0.0001)) {
     color_fs = vec4(mix(color_fs.xyz, shadowcolor.xyz, 0.5), color_fs.a);

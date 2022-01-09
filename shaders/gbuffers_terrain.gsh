@@ -15,11 +15,14 @@ uniform mat4 shadowModelView;
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferProjectionInverse;
 
+uniform sampler2D normals;
+
 // From Vertex Shader
 
 in vec2 texture_coord_vs[];
 in vec2 lightmap_coord_vs[];
 in vec4 color_vs[];
+in vec3 normal_vs[];
 
 // Output
 
@@ -27,12 +30,16 @@ out vec2 texture_coord_gs;
 out vec2 lightmap_coord_gs;
 out vec3 shadowmap_coord_gs;
 out vec4 color_gs;
+out vec3 normal_gs;
 
-vec3 screen_to_shadowmap_space(vec4 screen_coord) {
+vec3 screen_to_shadowmap_space(vec4 screen_coord, vec3 normal) {
   vec4 shadowmap_coord = gbufferModelViewInverse * gbufferProjectionInverse * screen_coord;
   // You would think that at this point, shadowmap_coord should be
   // equal to world_coord but for some reason I don't understand, this
   // works and just using world_coord doesn't...
+
+  // Inflate a bit to avoid z-fighting.
+  shadowmap_coord.xyz += 0.1 * normal;
   shadowmap_coord = shadowProjection * shadowModelView * shadowmap_coord;
   shadowmap_coord /= shadowmap_coord.w;
   shadowmap_coord.xyz = shadowmap_coord.xyz * 0.5 + 0.5;
@@ -56,11 +63,16 @@ void emit_point(float s, float t) {
   vec4 color_s_vec = color_vs[1]-color_vs[0];
   vec4 color_t_vec = color_vs[2]-color_vs[0];
 
+  vec3 normal_base = normal_vs[0];
+  vec3 normal_s_vec = normal_vs[1]-normal_vs[0];
+  vec3 normal_t_vec = normal_vs[2]-normal_vs[0];
+
   gl_Position = vec4(base + s * s_vec + t * t_vec, 1.0);
   gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Position;
   texture_coord_gs = texture_base + s * texture_s_vec + t * texture_t_vec;
   lightmap_coord_gs = lightmap_base + s * lightmap_s_vec + t * lightmap_t_vec;
-  shadowmap_coord_gs = screen_to_shadowmap_space(gl_Position);
+  vec3 normal_gs = normalize(normal_base + s * normal_s_vec + t * normal_t_vec);
+  shadowmap_coord_gs = screen_to_shadowmap_space(gl_Position, normal_gs);
   color_gs = color_base + s * color_s_vec + t * color_t_vec;
   EmitVertex();
 }
