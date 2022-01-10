@@ -8,3 +8,5 @@ My experiments with OptiFine shaders.
   in the water.
 - `geometry_shaders`: Has nicer, colored shadows and does triangle subdivision
   in a geometry shader.
+- `color-shaders`: Experimental shader that colors each gbuffer-shader a
+  different color.
