@@ -10,3 +10,7 @@ My experiments with OptiFine shaders.
   in a geometry shader.
 - `color-shaders`: Experimental shader that colors each gbuffer-shader a
   different color.
+- `flat-shading`: Implement flat shading as described in our course computer
+  graphics.
+- `phong-shading`: Implement Phong shading as described in our course computer
+  graphics.
